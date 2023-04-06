@@ -14,8 +14,25 @@ rbtree *new_rbtree(void) {
   return p;
 }
 
+void delete_node(rbtree *t, node_t *target) {
+  if (target == t -> nil){
+     return;
+  }
+  if (target -> left != t -> nil) {
+    delete_node(t, target->left);
+  }
+  if (target -> right != t -> nil) {
+    delete_node(t, target -> right);
+  }
+  free(target);
+}
+
 void delete_rbtree(rbtree *t) {
-  // TODO: reclaim the tree nodes's memory
+  // 잔여 노드를 모두 지워준다
+  delete_node(t, t->root);
+  // nil 노드를 지운다
+  free(t->nil);
+  // tree를 최종적으로 지운다
   free(t);
 }
 
@@ -167,24 +184,19 @@ node_t *rbtree_insert(rbtree *t, const key_t key) {
   return new_node;
 }
 
-node_t *rbtree_find(const rbtree *t, const key_t key) {
-  node_t *current = t -> root;
-
-  while (current != t -> nil && key != current -> key) {
-    if (key < current -> key) {
-      // 현재 값보다 탐색하려는 값이 작으면 왼쪽 자식으로 가서 탐색한다
-      current = current -> left;
-    } else  {
-      // 그 반대의 경우 오른쪽 자식으로 가서 탐색한다
-      current = current -> right;
-    } 
+node_t *rbtree_find(const rbtree *t, const key_t key)
+{
+  node_t *current = t->root;
+  while (current != t->nil)
+  {
+    if (current->key == key)
+      return current;
+    else if (current->key > key)
+      current = current->left;
+    else
+      current = current->right;
   }
-  // key를 찾았으면 key 반환, 그렇지 않을 경우 NULL 반환
-  if (key == current -> key) {
-    return current;
-  } else {
-    return NULL;
-  }
+  return NULL;
 }
 
 node_t *rbtree_min(const rbtree *t) {
@@ -279,8 +291,8 @@ void rbtree_delete_fixup(rbtree *t, node_t *target) {
         target = target -> parent;
       } else {
         if (brother -> left -> color == RBTREE_BLACK) {
-          brother -> right -> color = RBTREE_BLACK;
           brother -> color = RBTREE_RED;
+          brother -> right -> color = RBTREE_BLACK;
           left_rotate(t, brother);
           brother = target -> parent -> left;
         }
